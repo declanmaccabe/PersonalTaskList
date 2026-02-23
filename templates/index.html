@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Tasks</h1>
+    <div>
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal">Add new task</button>
+    </div>
+  </div>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+      <select name="status" class="form-select">
+        {% for s in statuses %}
+          <option value="{{ s }}" {% if s==selected_status %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <input type="text" name="search" class="form-control" placeholder="Search title" value="{{ search }}">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary">Filter</button>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Task</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Planned Start</th>
+          <th>Due</th>
+          <th>Closed</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tasks %}
+        <tr>
+          <td>{{ t.id }}</td>
+          <td>{{ t.title }}</td>
+          <td>{{ t.description or '' }}</td>
+          <td>{{ t.status }}</td>
+          <td>{{ t.created_date.strftime('%Y-%m-%d %H:%M') if t.created_date else '' }}</td>
+          <td>{{ t.planned_start_date or '' }}</td>
+          <td>{{ t.due_date or '' }}</td>
+          <td>{{ t.closed_date.strftime('%Y-%m-%d %H:%M') if t.closed_date else '' }}</td>
+          <td>
+            {% if t.status != 'Closed' %}
+            <form action="/close/{{ t.id }}" method="post" style="display:inline">
+              <button class="btn btn-sm btn-outline-danger">Close</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add Task Modal -->
+  <div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" action="/add">
+          <div class="modal-header">
+            <h5 class="modal-title">Add New Task</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input name="title" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea name="description" class="form-control"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Status</label>
+              <select name="status" class="form-select">
+                <option>New</option>
+                <option>In Progress</option>
+                <option>Onhold</option>
+                <option>Closed</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Planned Start</label>
+                <input name="planned_start_date" type="date" class="form-control">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Due Date</label>
+                <input name="due_date" type="date" class="form-control">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary">Add Task</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
