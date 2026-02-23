@@ -2,12 +2,17 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'tasks.db')
+DEFAULT_DB_URI = f'sqlite:///{DB_PATH}'
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-change-me')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', DEFAULT_DB_URI)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -37,6 +42,13 @@ def index():
     status_filter = request.args.get('status', 'All')
     search = request.args.get('search', '')
 
+    counts = {
+        'New': Task.query.filter_by(status='New').count(),
+        'In Progress': Task.query.filter_by(status='In Progress').count(),
+        'Onhold': Task.query.filter_by(status='Onhold').count(),
+        'Closed': Task.query.filter_by(status='Closed').count(),
+    }
+
     q = Task.query
     if status_filter and status_filter != 'All':
         q = q.filter_by(status=status_filter)
@@ -45,7 +57,14 @@ def index():
 
     tasks = q.order_by(Task.created_date.desc()).all()
     statuses = ['All', 'New', 'In Progress', 'Onhold', 'Closed']
-    return render_template('index.html', tasks=tasks, statuses=statuses, selected_status=status_filter, search=search)
+    return render_template(
+        'index.html',
+        tasks=tasks,
+        statuses=statuses,
+        selected_status=status_filter,
+        search=search,
+        counts=counts
+    )
 
 
 @app.route('/add', methods=['POST'])
@@ -77,5 +96,34 @@ def close_task(task_id):
     return redirect(url_for('index'))
 
 
+@app.route('/edit/<int:task_id>', methods=['POST'])
+def edit_task(task_id):
+    t = Task.query.get_or_404(task_id)
+    title = request.form.get('title')
+    description = request.form.get('description')
+    status = request.form.get('status') or t.status
+    planned_start = request.form.get('planned_start_date') or None
+    due_date = request.form.get('due_date') or None
+
+    t.title = title
+    t.description = description
+    # parse dates
+    t.planned_start_date = datetime.strptime(planned_start, '%Y-%m-%d').date() if planned_start else None
+    t.due_date = datetime.strptime(due_date, '%Y-%m-%d').date() if due_date else None
+
+    # handle status transitions and closed_date
+    prev_status = t.status
+    t.status = status
+    if status == 'Closed' and not t.closed_date:
+        t.closed_date = datetime.utcnow()
+    if prev_status == 'Closed' and status != 'Closed':
+        t.closed_date = None
+
+    db.session.commit()
+    return redirect(url_for('index'))
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    is_debug = os.getenv('FLASK_DEBUG', '0') == '1'
+    port = int(os.getenv('PORT', '5000'))
+    app.run(host='0.0.0.0', port=port, debug=is_debug)

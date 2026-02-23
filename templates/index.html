@@ -8,6 +8,42 @@
     </div>
   </div>
 
+  <!-- Stats row -->
+  <div class="row mb-3">
+    <div class="col-sm-3">
+      <div class="card text-bg-light">
+        <div class="card-body">
+          <h6 class="card-title">New</h6>
+          <p class="card-text display-6">{{ counts.New or 0 }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-3">
+      <div class="card text-bg-light">
+        <div class="card-body">
+          <h6 class="card-title">In Progress</h6>
+          <p class="card-text display-6">{{ counts['In Progress'] or 0 }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-3">
+      <div class="card text-bg-light">
+        <div class="card-body">
+          <h6 class="card-title">Onhold</h6>
+          <p class="card-text display-6">{{ counts.Onhold or 0 }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-3">
+      <div class="card text-bg-light">
+        <div class="card-body">
+          <h6 class="card-title">Closed</h6>
+          <p class="card-text display-6">{{ counts.Closed or 0 }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <form method="get" class="row g-2 mb-3">
     <div class="col-auto">
       <select name="status" class="form-select">
@@ -21,7 +57,7 @@
     </div>
     <div class="col-auto">
       <button class="btn btn-primary">Filter</button>
-    </div>
+    </div>    
   </form>
 
   <div class="table-responsive">
@@ -51,11 +87,21 @@
           <td>{{ t.due_date or '' }}</td>
           <td>{{ t.closed_date.strftime('%Y-%m-%d %H:%M') if t.closed_date else '' }}</td>
           <td>
-            {% if t.status != 'Closed' %}
-            <form action="/close/{{ t.id }}" method="post" style="display:inline">
-              <button class="btn btn-sm btn-outline-danger">Close</button>
-            </form>
-            {% endif %}
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-sm btn-outline-secondary edit-btn"
+                data-id="{{ t.id }}"
+                data-title="{{ t.title|e }}"
+                data-description="{{ t.description|e }}"
+                data-status="{{ t.status }}"
+                data-planned="{{ t.planned_start_date }}"
+                data-due="{{ t.due_date }}"
+              >Edit</button>
+              {% if t.status != 'Closed' %}
+              <form action="/close/{{ t.id }}" method="post" style="display:inline">
+                <button class="btn btn-sm btn-outline-danger">Close</button>
+              </form>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -104,6 +150,53 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button class="btn btn-primary">Add Task</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Task Modal -->
+  <div class="modal fade" id="editTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" id="editTaskForm">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Task</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input name="title" id="edit-title" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea name="description" id="edit-description" class="form-control"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Status</label>
+              <select name="status" id="edit-status" class="form-select">
+                <option>New</option>
+                <option>In Progress</option>
+                <option>Onhold</option>
+                <option>Closed</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Planned Start</label>
+                <input name="planned_start_date" id="edit-planned" type="date" class="form-control">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Due Date</label>
+                <input name="due_date" id="edit-due" type="date" class="form-control">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary">Save</button>
           </div>
         </form>
       </div>
