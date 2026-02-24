@@ -56,12 +56,17 @@ In App Service -> Configuration:
 
 - Startup Command:
 
-    `gunicorn --bind 0.0.0.0:$PORT app:app`
+    `gunicorn --bind 0.0.0.0:$PORT wsgi:app`
 
 - Application settings:
     - `SECRET_KEY` = strong random value
     - `FLASK_DEBUG` = `0`
+    - `AUTO_CREATE_DB` = `0` (set to `1` only when you intentionally want auto table creation)
     - (optional for now) `DATABASE_URL` = your managed DB connection string
+
+`DATABASE_URL` supports either:
+- Full SQLAlchemy URI (example: `postgresql+psycopg://user:pass@host:5432/dbname`)
+- Azure ODBC-style connection string (converted internally to `mssql+pyodbc`)
 
 ### 5) Enable sign-in with your M365/AD account
 
@@ -77,6 +82,18 @@ This gives you AD-backed login without writing auth code first.
 
 - For testing: SQLite can work for one instance, but it is not ideal for production scale/reliability.
 - For real use: move to Azure SQL or Azure Database for PostgreSQL and set `DATABASE_URL`.
+
+## Azure App Service Deployment Notes
+
+- Python runtime: use **3.11+**.
+- Startup Command: `gunicorn wsgi:app`
+- Required Application Settings:
+    - `SECRET_KEY`
+    - `DATABASE_URL`
+    - `AUTO_CREATE_DB` (optional; set to `0` in production unless intentionally creating tables)
+- Required build setting:
+    - `SCM_DO_BUILD_DURING_DEPLOYMENT=true`
+- If using Azure SQL via ODBC connection strings, App Service must have **ODBC Driver 18 for SQL Server** available.
 
 ## Fastest rollout estimate
 
