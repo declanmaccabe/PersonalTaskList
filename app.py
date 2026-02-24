@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'tasks.db')
+IS_AZURE_APP_SERVICE = bool(os.getenv('WEBSITE_SITE_NAME'))
+DB_PATH = '/home/tasks.db' if IS_AZURE_APP_SERVICE else os.path.join(BASE_DIR, 'tasks.db')
 DEFAULT_DB_URI = f'sqlite:///{DB_PATH}'
 
 
@@ -46,10 +47,9 @@ class Task(db.Model):
         return f'<Task {self.id} {self.title}>'
 
 
-# create database tables only when explicitly enabled
-if os.getenv('AUTO_CREATE_DB', '0') == '1':
-    with app.app_context():
-        db.create_all()
+# create database tables on startup (prototype behavior)
+with app.app_context():
+    db.create_all()
 
 
 @app.route('/', methods=['GET'])
