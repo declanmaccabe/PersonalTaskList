@@ -2,6 +2,7 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import os
+from urllib.parse import quote_plus
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,9 +11,22 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'tasks.db')
 DEFAULT_DB_URI = f'sqlite:///{DB_PATH}'
 
+
+def build_sqlalchemy_uri():
+    database_url = os.getenv('DATABASE_URL')
+    if not database_url:
+        return DEFAULT_DB_URI
+
+    # full SQLAlchemy/database URI
+    if '://' in database_url:
+        return database_url
+
+    # Azure ODBC-style connection string
+    return f"mssql+pyodbc:///?odbc_connect={quote_plus(database_url)}"
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-change-me')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', DEFAULT_DB_URI)
+app.config['SQLALCHEMY_DATABASE_URI'] = build_sqlalchemy_uri()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -32,9 +46,10 @@ class Task(db.Model):
         return f'<Task {self.id} {self.title}>'
 
 
-# create database tables (convenience for local development)
-with app.app_context():
-    db.create_all()
+# create database tables only when explicitly enabled
+if os.getenv('AUTO_CREATE_DB', '0') == '1':
+    with app.app_context():
+        db.create_all()
 
 
 @app.route('/', methods=['GET'])
