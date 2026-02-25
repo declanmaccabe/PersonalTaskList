@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import os
@@ -42,6 +42,20 @@ class Task(db.Model):
     planned_start_date = db.Column(db.Date, nullable=True)
     due_date = db.Column(db.Date, nullable=True)
     closed_date = db.Column(db.DateTime, nullable=True)
+
+    @property
+    def open_days(self):
+        if not self.created_date:
+            return 0
+
+        created = self.created_date
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        else:
+            created = created.astimezone(timezone.utc)
+
+        now_utc = datetime.now(timezone.utc)
+        return max(0, (now_utc - created).days)
 
     def __repr__(self):
         return f'<Task {self.id} {self.title}>'

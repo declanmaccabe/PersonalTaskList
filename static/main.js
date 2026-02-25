@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			const title = this.dataset.title || '';
 			const description = this.dataset.description || '';
 			const status = this.dataset.status || 'New';
+			const created = this.dataset.created || '';
+			const openDays = this.dataset.openDays || '0';
 			const planned = this.dataset.planned || '';
 			const due = this.dataset.due || '';
 
@@ -17,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			document.getElementById('edit-title').value = title;
 			document.getElementById('edit-description').value = description;
 			document.getElementById('edit-status').value = status;
+			document.getElementById('edit-created').value = created;
+			document.getElementById('edit-open-days').value = openDays;
 			document.getElementById('edit-planned').value = planned === 'None' ? '' : (planned || '');
 			document.getElementById('edit-due').value = due === 'None' ? '' : (due || '');
 

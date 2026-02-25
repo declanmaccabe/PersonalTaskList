@@ -68,7 +68,7 @@
           <th>Task</th>
           <th>Description</th>
           <th>Status</th>
-          <th>Created</th>
+          <th>Open (Days)</th>
           <th>Planned Start</th>
           <th>Due</th>
           <th>Closed</th>
@@ -82,7 +82,7 @@
           <td>{{ t.title }}</td>
           <td>{{ t.description or '' }}</td>
           <td>{{ t.status }}</td>
-          <td>{{ t.created_date.strftime('%Y-%m-%d %H:%M') if t.created_date else '' }}</td>
+          <td>{{ t.open_days }}</td>
           <td>{{ t.planned_start_date or '' }}</td>
           <td>{{ t.due_date or '' }}</td>
           <td>{{ t.closed_date.strftime('%Y-%m-%d %H:%M') if t.closed_date else '' }}</td>
@@ -93,6 +93,8 @@
                 data-title="{{ t.title|e }}"
                 data-description="{{ t.description|e }}"
                 data-status="{{ t.status }}"
+                data-created="{{ t.created_date.strftime('%Y-%m-%d %H:%M') if t.created_date else '' }}"
+                data-open-days="{{ t.open_days }}"
                 data-planned="{{ t.planned_start_date }}"
                 data-due="{{ t.due_date }}"
               >Edit</button>
@@ -182,6 +184,16 @@
                 <option>Onhold</option>
                 <option>Closed</option>
               </select>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Created</label>
+                <input id="edit-created" class="form-control" readonly>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Open (Days)</label>
+                <input id="edit-open-days" class="form-control" readonly>
+              </div>
             </div>
             <div class="row">
               <div class="col-md-6 mb-3">
